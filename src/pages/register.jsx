@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import Base from '../components/Base'
-import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { Button, Card, Col, Container, Form, Row, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+import { registerUser } from '../services/user.service';
 
 
 const register = () => {
@@ -16,26 +17,67 @@ const register = () => {
             confirmPassword: '',
             about: '',
             gender: ''
-        })
+        });
+        const [errorData,setErrorData]=useState(
+            {
+                isError:false,
+                errorData:null
+            }
+        )
+
+        const [loading,setLoading]=useState(false);
 
         const submitForm=(event)=>
         {
              event.preventDefault();
              console.log(data);
             
-            if(typeof(data.name) === undefined) || (data.name.trim()==''))
+            if(((data.name) === undefined) || (data.name.trim()==''))
              {
-                toast.console.error('Name is required');
+                toast.error('Name is required');
                 return 
              }
+             if(((data.email) === undefined) || (data.email.trim()==''))
+             {
+                toast.error('Email is required');
+                return 
+             }
+             if(((data.password) === undefined) || (data.password.trim()==''))
+             {
+                toast.error('Password is required');
+                return 
+             }
+             if(((data.confirmPassword) === undefined) || (data.confirmPassword.trim()==''))
+             {
+                toast.error('Confirm Password is required');
+                return 
+             }
+             if(data.password!=data.confirmPassword)
+             {
+                toast.error('Password and Confirm Password are not matched');
+                return 
+             }
+             setLoading(true);
+             registerUser(data).then((response)=>
+             {
+                console.log(response.data);
+                toast.success('User created successfully ');
+                clearData();
+             }).catch(error=>
+                { 
+                    console.error(error);
+                    setErrorData(
+                        {
+                            errorData:true,
+                            errorData:error
+
+                        }
+                    )
+                    console.error("Error in creating user ! Try again ");
+                }).finally(()=>setLoading(false))
         }
 
-        const [errorData,setErrorData]=useState(
-            {
-                errorData:false,
-                setErrorData:null
-            }
-        )
+       
        const handleChange=(event,property)=>
         {
              console.log(event);
@@ -73,7 +115,7 @@ const register = () => {
                         <Card className='my-2 border-0' style={ {position:'relative', top:-40}}>
                             <Card.Body>
                                 <h4 className='text-center'>SignUp Here</h4>
-                                <Form onSubmit={submitForm}>
+                                <Form noValidate onSubmit={submitForm}>
                                     {/* Name field */}
                                     <Form.Group className="mb-3" controlId="formName">
                                         <Form.Label>Enter your name</Form.Label>
@@ -82,8 +124,11 @@ const register = () => {
                                         placeholder="Enter your name" 
                                         value={data.name}
                                         onChange={(event)=>handleChange(event,'name')}
+                                        isInvalid={errorData.errorData?.response?.data?.name}
                                         />
-
+                                        <Form.Control.Feedback type="invalid">
+                                                       {errorData.errorData?.response?.data?.name}
+                                         </Form.Control.Feedback>
                                     </Form.Group>
 
                                     {/* Email Field */}
@@ -94,7 +139,11 @@ const register = () => {
                                         value={data.email}
                                         placeholder="Enter your email"
                                         onChange={(event)=>handleChange(event,'email')}
+                                        isInvalid={errorData.errorData?.response?.data?.email}
                                          />
+                                         <Form.Control.Feedback type="invalid">
+                                                       {errorData.errorData?.response?.data?.email}
+                                         </Form.Control.Feedback>
 
                                     </Form.Group>
 
@@ -106,7 +155,11 @@ const register = () => {
                                         value={data.password}
                                          placeholder="Enter your password"
                                          onChange={(event)=>handleChange(event,'password')}
+                                         isInvalid={errorData.errorData?.response?.data?.password}
                                          />
+                                         <Form.Control.Feedback type="invalid">
+                                                       {errorData.errorData?.response?.data?.password}
+                                         </Form.Control.Feedback>
 
                                     </Form.Group>
 
@@ -165,9 +218,14 @@ const register = () => {
                                                placeholder='Write here'
                                                value={data.about}
                                                onChange={(event)=>handleChange(event,'about')}
+                                               isInvalid={errorData.errorData?.response?.data?.about}
                                                >
 
                                         </Form.Control>
+                                        <Form.Control.Feedback type="invalid">
+                                                       {errorData.errorData?.response?.data?.about}
+                                         </Form.Control.Feedback>
+
                                     </Form.Group>
 
                                     <Container>
@@ -176,7 +234,20 @@ const register = () => {
                                         </p>
                                     </Container>
                                     <Container className='text-center'>
-                                        <Button type='submit' variant='success'>Register</Button>
+                                        <Button 
+                                             type='submit'
+                                             className='text-uppercase'
+                                              variant='success'>
+                                                <Spinner 
+                                                  animation='border'
+                                                  size='sm'
+                                                  className='me-2'
+                                                  hidden={!loading}
+                                                />
+                                                <span  hidden={!loading}>Wait...</span>
+                                                <span  hidden={loading}> Register</span>
+                                               
+                                        </Button>
                                         <Button className='ms-2' variant='danger' onClick={clearData}>Reset</Button>
                                     </Container>
 
